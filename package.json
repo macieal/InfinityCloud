@@ -1,12 +1,15 @@
 {
   "name": "infinitycloud",
   "version": "1.0.0",
-  "description": "InfinityCloud Hosting Platform",
+  "description": "Hospedagem de sites HTML",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
