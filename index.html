@@ -160,9 +160,6 @@
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             transition: all 0.3s ease;
             border: 2px solid transparent;
         }
@@ -170,6 +167,13 @@
         .site-card:hover {
             border-color: #667eea;
             transform: translateX(5px);
+        }
+
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
         .site-info h3 {
@@ -191,9 +195,37 @@
             font-weight: 600;
         }
 
+        .site-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-building {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        [data-theme="dark"] .status-active {
+            background: #1e4620;
+            color: #90ee90;
+        }
+
+        [data-theme="dark"] .status-building {
+            background: #4a3c1a;
+            color: #ffd700;
+        }
+
         .site-actions {
             display: flex;
             gap: 10px;
+            margin-top: 15px;
         }
 
         .btn-action {
@@ -212,6 +244,16 @@
 
         .btn-delete:hover {
             background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        .btn-view {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #5568d3;
             transform: scale(1.05);
         }
 
@@ -237,8 +279,10 @@
             background: var(--content-bg);
             border-radius: 20px;
             padding: 40px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 20px 60px var(--shadow);
             animation: modalSlideIn 0.3s ease;
             transition: background 0.3s ease;
@@ -308,6 +352,107 @@
             transition: color 0.3s ease;
         }
 
+        .file-upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: var(--card-bg);
+        }
+
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: var(--content-bg);
+        }
+
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .file-upload-area svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        .file-upload-area p {
+            color: var(--text-primary);
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .file-upload-area span {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: var(--card-bg);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: var(--border-color);
+        }
+
+        .file-name {
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        .file-size {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        .btn-remove-file {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .upload-progress {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: var(--border-color);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
         .modal-actions {
             display: flex;
             gap: 15px;
@@ -330,9 +475,14 @@
             color: white;
         }
 
-        .btn-submit:hover {
+        .btn-submit:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .btn-cancel {
@@ -349,6 +499,12 @@
                 position: static;
                 margin-bottom: 20px;
             }
+
+            .site-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -359,13 +515,13 @@
                 <span id="themeIcon">🌙</span>
             </button>
             <h1>☁️ InfinityCloud</h1>
-            <p>Hospedagem de sites simples e poderosa com Render</p>
+            <p>Hospedagem de sites simples e poderosa</p>
         </div>
 
         <div class="main-content">
             <div class="action-section">
                 <button class="btn-create" onclick="openModal()">
-                    + Criar Novo Site
+                    + Publicar Novo Site
                 </button>
             </div>
 
@@ -377,7 +533,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                         </svg>
                         <h3>Nenhum site hospedado ainda</h3>
-                        <p>Clique no botão acima para criar seu primeiro site</p>
+                        <p>Clique no botão acima para publicar seu primeiro site</p>
                     </div>
                 </div>
             </div>
@@ -387,10 +543,10 @@
     <div class="modal" id="createModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Criar Novo Site</h2>
-                <p>Preencha as informações do seu site</p>
+                <h2>📤 Publicar Novo Site</h2>
+                <p>Faça upload dos arquivos do seu site</p>
             </div>
-            <form id="createForm" onsubmit="createSite(event)">
+            <form id="createForm" onsubmit="publishSite(event)">
                 <div class="form-group">
                     <label for="siteName">Nome do Site</label>
                     <input type="text" id="siteName" required placeholder="Meu Site Incrível">
@@ -398,12 +554,33 @@
                         Seu site estará disponível em: https://infinitycloud.onrender.com/<span id="slugPreview">nome-do-site</span>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label>Arquivos do Site</label>
+                    <div class="file-upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p>Clique ou arraste os arquivos aqui</p>
+                        <span>HTML, CSS, JS, imagens e outros arquivos</span>
+                    </div>
+                    <input type="file" id="fileInput" multiple hidden accept="*/*">
+                </div>
+
+                <div class="file-list" id="fileList"></div>
+
+                <div class="upload-progress" id="uploadProgress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill">0%</div>
+                    </div>
+                </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn-modal btn-cancel" onclick="closeModal()">
                         Cancelar
                     </button>
-                    <button type="submit" class="btn-modal btn-submit">
-                        Criar Site
+                    <button type="submit" class="btn-modal btn-submit" id="publishBtn">
+                        🚀 Publicar Site
                     </button>
                 </div>
             </form>
@@ -413,6 +590,7 @@
     <script>
         let sites = [];
         let currentTheme = 'light';
+        let uploadedFiles = [];
 
         function initTheme() {
             const savedTheme = 'light';
@@ -440,6 +618,9 @@
             document.getElementById('createModal').classList.remove('active');
             document.getElementById('createForm').reset();
             document.getElementById('slugPreview').textContent = 'nome-do-site';
+            uploadedFiles = [];
+            renderFileList();
+            document.getElementById('uploadProgress').style.display = 'none';
         }
 
         document.getElementById('siteName').addEventListener('input', function(e) {
@@ -452,7 +633,72 @@
             document.getElementById('slugPreview').textContent = slug || 'nome-do-site';
         });
 
-        function createSite(event) {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            addFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            addFiles(files);
+        });
+
+        function addFiles(files) {
+            files.forEach(file => {
+                if (!uploadedFiles.some(f => f.name === file.name)) {
+                    uploadedFiles.push(file);
+                }
+            });
+            renderFileList();
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            renderFileList();
+        }
+
+        function renderFileList() {
+            const fileList = document.getElementById('fileList');
+            
+            if (uploadedFiles.length === 0) {
+                fileList.innerHTML = '';
+                return;
+            }
+
+            fileList.innerHTML = uploadedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div>
+                        <div class="file-name">📄 ${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button type="button" class="btn-remove-file" onclick="removeFile(${index})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function publishSite(event) {
             event.preventDefault();
             
             const name = document.getElementById('siteName').value;
@@ -466,27 +712,72 @@
                 alert('Por favor, digite um nome válido para o site.');
                 return;
             }
+
+            if (uploadedFiles.length === 0) {
+                alert('Por favor, faça upload de pelo menos um arquivo.');
+                return;
+            }
+
+            const hasIndexHtml = uploadedFiles.some(f => f.name.toLowerCase() === 'index.html');
+            if (!hasIndexHtml) {
+                alert('Seu site precisa ter um arquivo index.html');
+                return;
+            }
             
             if (sites.some(site => site.slug === slug)) {
                 alert('Já existe um site com este nome. Escolha outro nome.');
                 return;
             }
-            
+
+            const publishBtn = document.getElementById('publishBtn');
+            publishBtn.disabled = true;
+            publishBtn.textContent = '⏳ Publicando...';
+
+            const progressDiv = document.getElementById('uploadProgress');
+            progressDiv.style.display = 'block';
+
+            await simulateUpload();
+
             const newSite = {
                 id: Date.now(),
                 name: name,
                 slug: slug,
                 url: `https://infinitycloud.onrender.com/${slug}`,
+                files: uploadedFiles.map(f => f.name),
+                status: 'active',
                 createdAt: new Date().toLocaleDateString('pt-BR')
             };
             
             sites.push(newSite);
             renderSites();
             closeModal();
+
+            publishBtn.disabled = false;
+            publishBtn.textContent = '🚀 Publicar Site';
+        }
+
+        function simulateUpload() {
+            return new Promise((resolve) => {
+                let progress = 0;
+                const progressFill = document.getElementById('progressFill');
+                
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 100) progress = 100;
+                    
+                    progressFill.style.width = progress + '%';
+                    progressFill.textContent = Math.round(progress) + '%';
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(resolve, 500);
+                    }
+                }, 200);
+            });
         }
 
         function deleteSite(id) {
-            if (confirm('Tem certeza que deseja remover este site?')) {
+            if (confirm('Tem certeza que deseja remover este site? Todos os arquivos serão deletados.')) {
                 sites = sites.filter(site => site.id !== id);
                 renderSites();
             }
@@ -502,7 +793,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                         </svg>
                         <h3>Nenhum site hospedado ainda</h3>
-                        <p>Clique no botão acima para criar seu primeiro site</p>
+                        <p>Clique no botão acima para publicar seu primeiro site</p>
                     </div>
                 `;
                 return;
@@ -510,16 +801,27 @@
             
             sitesList.innerHTML = sites.map(site => `
                 <div class="site-card">
-                    <div class="site-info">
-                        <h3>${site.name}</h3>
-                        <p>
-                            <a href="${site.url}" target="_blank" class="site-url">${site.url}</a>
-                            • Criado em ${site.createdAt}
-                        </p>
+                    <div class="site-header">
+                        <div class="site-info">
+                            <h3>${site.name}</h3>
+                            <p>
+                                <a href="${site.url}" target="_blank" class="site-url">${site.url}</a>
+                                • Criado em ${site.createdAt}
+                            </p>
+                            <p style="margin-top: 8px; font-size: 0.85em;">
+                                📁 ${site.files.length} arquivo(s): ${site.files.join(', ')}
+                            </p>
+                        </div>
+                        <div class="site-status status-${site.status}">
+                            ${site.status === 'active' ? '✅ Online' : '⏳ Publicando'}
+                        </div>
                     </div>
                     <div class="site-actions">
+                        <button class="btn-action btn-view" onclick="window.open('${site.url}', '_blank')">
+                            🔗 Visitar
+                        </button>
                         <button class="btn-action btn-delete" onclick="deleteSite(${site.id})">
-                            Remover
+                            🗑️ Remover
                         </button>
                     </div>
                 </div>
