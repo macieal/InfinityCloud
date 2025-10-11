@@ -1,545 +1,92 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InfinityCloud - Hospedagem de Sites</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>InfinityCloud</title>
+<style>
+:root {
+  --bg-light: #f5f5f5;
+  --text-light: #1a1a1a;
+  --bg-dark: #0f172a;
+  --text-dark: #e2e8f0;
+  --accent: #6ee7b7;
+}
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-light);
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  transition: 0.3s;
+}
+h1 {
+  color: var(--accent);
+  font-size: 2.2rem;
+}
+button {
+  background: var(--accent);
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 15px;
+  font-weight: 600;
+}
+button:hover { opacity: 0.9; }
 
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f5f5f5;
-            --text-primary: #1a1a1a;
-            --text-secondary: #666666;
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --border: #e5e5e5;
-            --shadow: rgba(0, 0, 0, 0.1);
-            --success: #10b981;
-            --error: #ef4444;
-        }
+#theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  padding: 6px 12px;
+  border-radius: 8px;
+}
 
-        [data-theme="dark"] {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2d2d2d;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
-            --accent: #818cf8;
-            --accent-hover: #6366f1;
-            --border: #404040;
-            --shadow: rgba(0, 0, 0, 0.3);
-            --success: #34d399;
-            --error: #f87171;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            transition: background 0.3s, color 0.3s;
-        }
-
-        .header {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 1.5rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px var(--shadow);
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .theme-toggle {
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: all 0.3s;
-        }
-
-        .theme-toggle:hover {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 3rem 2rem;
-        }
-
-        .hero {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .hero h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--accent), #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        .actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            padding: 0.875rem 2rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px var(--shadow);
-        }
-
-        .sites-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .site-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s;
-        }
-
-        .site-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px var(--shadow);
-        }
-
-        .site-name {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .site-url {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-            word-break: break-all;
-        }
-
-        .site-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            flex: 1;
-        }
-
-        .btn-secondary {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--border);
-        }
-
-        .btn-danger {
-            background: var(--error);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            opacity: 0.9;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--bg-primary);
-            border-radius: 16px;
-            padding: 2rem;
-            max-width: 600px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px var(--shadow);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-header h2 {
-            font-size: 1.5rem;
-            color: var(--text-primary);
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-
-        .close-btn:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .form-group textarea {
-            min-height: 300px;
-            font-family: 'Courier New', monospace;
-            resize: vertical;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-secondary);
-        }
-
-        .empty-state svg {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .notification {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px var(--shadow);
-            display: none;
-            align-items: center;
-            gap: 0.75rem;
-            z-index: 2000;
-            animation: slideIn 0.3s ease;
-        }
-
-        .notification.active {
-            display: flex;
-        }
-
-        .notification.success {
-            background: var(--success);
-            color: white;
-        }
-
-        .notification.error {
-            background: var(--error);
-            color: white;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .actions {
-                flex-direction: column;
-            }
-
-            .sites-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+.dark {
+  background: var(--bg-dark);
+  color: var(--text-dark);
+}
+</style>
 </head>
-<body data-theme="light">
-    <header class="header">
-        <div class="logo">
-            <span>☁️</span>
-            <span>InfinityCloud</span>
-        </div>
-        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-    </header>
+<body>
+<button id="theme-toggle">🌙 Modo Escuro</button>
+<h1>🌐 InfinityCloud</h1>
+<p>Hospede sites HTML diretamente no Render!</p>
+<button id="create-site">Criar novo site</button>
 
-    <div class="container">
-        <div class="hero">
-            <h1>Hospedagem de Sites Simples e Rápida</h1>
-            <p>Publique seus sites HTML em segundos</p>
-            <div class="actions">
-                <button class="btn btn-primary" onclick="openModal()">
-                    <span>➕</span>
-                    <span>Criar Novo Site</span>
-                </button>
-            </div>
-        </div>
+<script>
+const toggle = document.getElementById("theme-toggle");
+toggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+  toggle.textContent = document.body.classList.contains("dark") ? "☀️ Modo Claro" : "🌙 Modo Escuro";
+});
 
-        <div id="sitesContainer">
-            <div class="empty-state">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-                <h3>Nenhum site publicado ainda</h3>
-                <p>Clique em "Criar Novo Site" para começar</p>
-            </div>
-        </div>
-    </div>
+document.getElementById("create-site").onclick = async () => {
+  const name = prompt("Digite o nome do site:");
+  if (!name) return alert("Você precisa digitar um nome!");
+  
+  const html = prompt("Cole o código HTML do site aqui:");
+  if (!html) return alert("Você precisa colar o HTML!");
+  
+  const res = await fetch(`/create?name=${encodeURIComponent(name)}`, {
+    method: "POST",
+    headers: { "Content-Type": "text/html" },
+    body: html
+  });
 
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Criar Novo Site</h2>
-                <button class="close-btn" onclick="closeModal()">×</button>
-            </div>
-            <form id="siteForm" onsubmit="createSite(event)">
-                <div class="form-group">
-                    <label for="siteName">Nome do Site</label>
-                    <input type="text" id="siteName" placeholder="meu-site" required>
-                </div>
-                <div class="form-group">
-                    <label for="siteHtml">Código HTML</label>
-                    <textarea id="siteHtml" placeholder="<!DOCTYPE html>..." required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    <span>🚀</span>
-                    <span>Publicar Site</span>
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div id="notification" class="notification"></div>
-
-    <script>
-        let sites = {};
-
-        function toggleTheme() {
-            const body = document.body;
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            body.setAttribute('data-theme', newTheme);
-            
-            const btn = document.querySelector('.theme-toggle');
-            btn.textContent = newTheme === 'light' ? '🌙' : '☀️';
-        }
-
-        function openModal() {
-            document.getElementById('modal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('modal').classList.remove('active');
-            document.getElementById('siteForm').reset();
-        }
-
-        function showNotification(message, type) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type} active`;
-            
-            setTimeout(() => {
-                notification.classList.remove('active');
-            }, 3000);
-        }
-
-        function createSite(event) {
-            event.preventDefault();
-            
-            const siteName = document.getElementById('siteName').value.trim();
-            const siteHtml = document.getElementById('siteHtml').value.trim();
-            
-            if (sites[siteName]) {
-                showNotification('Já existe um site com este nome!', 'error');
-                return;
-            }
-            
-            sites[siteName] = {
-                name: siteName,
-                html: siteHtml,
-                createdAt: new Date().toISOString()
-            };
-            
-            renderSites();
-            closeModal();
-            showNotification('Site criado com sucesso!', 'success');
-        }
-
-        function viewSite(siteName) {
-            const site = sites[siteName];
-            if (!site) return;
-            
-            const newWindow = window.open('', '_blank');
-            newWindow.document.write(site.html);
-            newWindow.document.close();
-        }
-
-        function deleteSite(siteName) {
-            if (confirm(`Tem certeza que deseja excluir o site "${siteName}"?`)) {
-                delete sites[siteName];
-                renderSites();
-                showNotification('Site excluído com sucesso!', 'success');
-            }
-        }
-
-        function renderSites() {
-            const container = document.getElementById('sitesContainer');
-            const siteNames = Object.keys(sites);
-            
-            if (siteNames.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                        </svg>
-                        <h3>Nenhum site publicado ainda</h3>
-                        <p>Clique em "Criar Novo Site" para começar</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = `
-                <div class="sites-grid">
-                    ${siteNames.map(name => {
-                        const site = sites[name];
-                        const url = `https://infinitycloud.onrender.com/${name}`;
-                        return `
-                            <div class="site-card">
-                                <div class="site-name">${site.name}</div>
-                                <div class="site-url">${url}</div>
-                                <div class="site-actions">
-                                    <button class="btn btn-secondary btn-small" onclick="viewSite('${name}')">
-                                        👁️ Visualizar
-                                    </button>
-                                    <button class="btn btn-danger btn-small" onclick="deleteSite('${name}')">
-                                        🗑️ Excluir
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        document.getElementById('modal').addEventListener('click', (e) => {
-            if (e.target.id === 'modal') {
-                closeModal();
-            }
-        });
-    </script>
+  const text = await res.text();
+  const win = window.open("", "_blank", "width=600,height=400");
+  win.document.write(text);
+};
+</script>
 </body>
 </html>
