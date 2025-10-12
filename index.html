@@ -50,10 +50,64 @@ button:hover { opacity: 0.9; }
   padding: 6px 12px;
   border-radius: 8px;
 }
-
 .dark {
   background: var(--bg-dark);
   color: var(--text-dark);
+}
+
+/* 🪟 Janela estilo Windows */
+.window {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  background: #1e293b;
+  color: white;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  display: none;
+  flex-direction: column;
+}
+.window-header {
+  background: #334155;
+  padding: 10px;
+  display: flex;
+  justify-content: flex-end;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.close-btn {
+  background: #ef4444;
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.window-content {
+  padding: 20px;
+}
+.window-content textarea {
+  width: 100%;
+  height: 200px;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-family: monospace;
+}
+.window-content input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  margin-bottom: 10px;
+}
+.window-content button {
+  background: #6ee7b7;
+  color: #0f172a;
 }
 </style>
 </head>
@@ -64,6 +118,18 @@ button:hover { opacity: 0.9; }
 <button id="create-site">Criar novo site</button>
 <button id="view-sites">Ver sites hospedados</button>
 
+<!-- 🪟 Janela estilo Windows -->
+<div class="window" id="create-window">
+  <div class="window-header">
+    <button class="close-btn" id="close-window">X</button>
+  </div>
+  <div class="window-content">
+    <input type="text" id="site-name" placeholder="Nome do site">
+    <textarea id="site-html" placeholder="Cole o HTML do site aqui..."></textarea>
+    <button id="submit-site">Publicar site</button>
+  </div>
+</div>
+
 <script>
 const toggle = document.getElementById("theme-toggle");
 toggle.addEventListener("click", () => {
@@ -71,22 +137,31 @@ toggle.addEventListener("click", () => {
   toggle.textContent = document.body.classList.contains("dark") ? "☀️ Modo Claro" : "🌙 Modo Escuro";
 });
 
-document.getElementById("create-site").onclick = async () => {
-  const name = prompt("Digite o nome do site:");
-  if (!name) return alert("Você precisa digitar um nome!");
-  
-  const html = prompt("Cole o código HTML do site aqui:");
-  if (!html) return alert("Você precisa colar o HTML!");
-  
+const win = document.getElementById("create-window");
+document.getElementById("create-site").onclick = () => {
+  win.style.display = "flex";
+};
+document.getElementById("close-window").onclick = () => {
+  win.style.display = "none";
+};
+
+document.getElementById("submit-site").onclick = async () => {
+  const name = document.getElementById("site-name").value.trim();
+  const html = document.getElementById("site-html").value.trim();
+  if (!name || !html) return alert("Preencha o nome e o HTML!");
+
   const res = await fetch(`/create?name=${encodeURIComponent(name)}`, {
     method: "POST",
     headers: { "Content-Type": "text/html" },
     body: html
   });
 
-  const text = await res.text();
-  const win = window.open("", "_blank", "width=600,height=400");
-  win.document.write(text);
+  if (res.ok) {
+    alert("✅ Site criado com sucesso!");
+    win.style.display = "none";
+  } else {
+    alert("❌ Erro ao criar o site!");
+  }
 };
 
 document.getElementById("view-sites").onclick = () => {
