@@ -6,8 +6,6 @@
 <title>InfinityCloud</title>
 <style>
 :root {
-  --bg-light: #f5f5f5;
-  --text-light: #1a1a1a;
   --bg-dark: #0f172a;
   --text-dark: #e2e8f0;
   --accent: #6ee7b7;
@@ -16,8 +14,8 @@ body {
   font-family: system-ui, sans-serif;
   margin: 0;
   padding: 0;
-  background: var(--bg-light);
-  color: var(--text-light);
+  background: var(--bg-dark);
+  color: var(--text-dark);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -49,10 +47,6 @@ button:hover { opacity: 0.9; }
   color: var(--accent);
   padding: 6px 12px;
   border-radius: 8px;
-}
-.dark {
-  background: var(--bg-dark);
-  color: var(--text-dark);
 }
 
 /* 🪟 Janela estilo Windows */
@@ -112,9 +106,8 @@ button:hover { opacity: 0.9; }
 </style>
 </head>
 <body>
-<button id="theme-toggle">🌙 Modo Escuro</button>
 <h1>🌐 InfinityCloud</h1>
-<p>Hospede sites HTML diretamente no Render!</p>
+<p>Hospede sites HTML + arquivos diretamente no Render!</p>
 <button id="create-site">Criar novo site</button>
 <button id="view-sites">Ver sites hospedados</button>
 
@@ -124,36 +117,28 @@ button:hover { opacity: 0.9; }
     <button class="close-btn" id="close-window">X</button>
   </div>
   <div class="window-content">
-    <input type="text" id="site-name" placeholder="Nome do site">
-    <textarea id="site-html" placeholder="Cole o HTML do site aqui..."></textarea>
-    <button id="submit-site">Publicar site</button>
+    <form id="upload-form" enctype="multipart/form-data">
+      <input type="text" name="name" placeholder="Nome do site" required>
+      <textarea name="html" placeholder="Cole o HTML do site aqui..." required></textarea>
+      <p>📁 Envie arquivos adicionais (CSS, JS, imagens...)</p>
+      <input type="file" name="files" multiple>
+      <button type="submit">Publicar site</button>
+    </form>
   </div>
 </div>
 
 <script>
-const toggle = document.getElementById("theme-toggle");
-toggle.addEventListener("click", () => {
-  document.body.classList.toggle("dark");
-  toggle.textContent = document.body.classList.contains("dark") ? "☀️ Modo Claro" : "🌙 Modo Escuro";
-});
-
 const win = document.getElementById("create-window");
-document.getElementById("create-site").onclick = () => {
-  win.style.display = "flex";
-};
-document.getElementById("close-window").onclick = () => {
-  win.style.display = "none";
-};
+document.getElementById("create-site").onclick = () => win.style.display = "flex";
+document.getElementById("close-window").onclick = () => win.style.display = "none";
 
-document.getElementById("submit-site").onclick = async () => {
-  const name = document.getElementById("site-name").value.trim();
-  const html = document.getElementById("site-html").value.trim();
-  if (!name || !html) return alert("Preencha o nome e o HTML!");
+document.getElementById("upload-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
 
-  const res = await fetch(`/create?name=${encodeURIComponent(name)}`, {
+  const res = await fetch("/create", {
     method: "POST",
-    headers: { "Content-Type": "text/html" },
-    body: html
+    body: formData
   });
 
   if (res.ok) {

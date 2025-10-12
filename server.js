@@ -2,6 +2,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import bodyParser from "body-parser";
+import multer from "multer";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,19 +10,23 @@ const PORT = process.env.PORT || 3000;
 const __dirname = path.resolve();
 const sitesDir = path.join(__dirname, "sites");
 
+// garante que a pasta exista
 if (!fs.existsSync(sitesDir)) {
   fs.mkdirSync(sitesDir);
 }
 
-app.use(bodyParser.text({ type: "text/html" }));
+// configura o multer para uploads temporários
+const upload = multer({ dest: "uploads/" });
+
 app.use(express.static("sites"));
 app.use(express.static(__dirname));
+app.use(bodyParser.text({ type: "text/html" }));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// 🔥 rota para listar sites
+// rota para listar sites hospedados
 app.get("/list", (req, res) => {
   const sites = fs.readdirSync(sitesDir).filter(file => {
     return fs.lstatSync(path.join(sitesDir, file)).isDirectory();
@@ -58,7 +63,7 @@ app.get("/list", (req, res) => {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        width: 300px;
+        width: 320px;
         background: #1e293b;
         padding: 10px 15px;
         border-radius: 8px;
@@ -110,7 +115,7 @@ app.get("/list", (req, res) => {
   res.send(html);
 });
 
-// 🔥 rota para deletar site
+// rota para deletar site
 app.delete("/delete/:name", (req, res) => {
   const siteName = req.params.name;
   const sitePath = path.join(sitesDir, siteName);
@@ -123,24 +128,31 @@ app.delete("/delete/:name", (req, res) => {
   res.status(404).send("❌ Site não encontrado!");
 });
 
-// 🔥 rota para criar site
-app.post("/create", (req, res) => {
-  const siteName = req.query.name;
-  const html = req.body;
-
-  if (!siteName) {
-    return res.status(400).send("Erro: forneça um nome ?name=nomedosite");
+// rota para criar site (HTML + arquivos)
+app.post("/create", upload.array("files"), (req, res) => {
+  const siteName = req.body.name;
+  const html = req.body.html;
+  if (!siteName || !html) {
+    return res.status(400).send("❌ Faltando nome ou HTML!");
   }
 
   const sitePath = path.join(sitesDir, siteName);
-
   if (!fs.existsSync(sitePath)) {
     fs.mkdirSync(sitePath);
   }
 
+  // salva o HTML principal
   fs.writeFileSync(path.join(sitePath, "index.html"), html);
 
-  res.send(`✅ Site criado com sucesso!`);
+  // salva arquivos enviados
+  if (req.files) {
+    req.files.forEach(file => {
+      const destPath = path.join(sitePath, file.originalname);
+      fs.renameSync(file.path, destPath);
+    });
+  }
+
+  res.send("✅ Site criado com sucesso!");
 });
 
 app.listen(PORT, () => {
