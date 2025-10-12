@@ -1,8 +1,8 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
-import bodyParser from "body-parser";
 import multer from "multer";
+import bodyParser from "body-parser";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,23 +10,21 @@ const PORT = process.env.PORT || 3000;
 const __dirname = path.resolve();
 const sitesDir = path.join(__dirname, "sites");
 
-// garante que a pasta exista
 if (!fs.existsSync(sitesDir)) {
   fs.mkdirSync(sitesDir);
 }
 
-// configura o multer para uploads temporários
-const upload = multer({ dest: "uploads/" });
-
+app.use(bodyParser.text({ type: "text/html" }));
 app.use(express.static("sites"));
 app.use(express.static(__dirname));
-app.use(bodyParser.text({ type: "text/html" }));
+
+const upload = multer({ dest: "uploads/" });
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// rota para listar sites hospedados
+// 🔥 Listar sites hospedados
 app.get("/list", (req, res) => {
   const sites = fs.readdirSync(sitesDir).filter(file => {
     return fs.lstatSync(path.join(sitesDir, file)).isDirectory();
@@ -48,27 +46,23 @@ app.get("/list", (req, res) => {
         padding: 40px;
       }
       h1 { color: #6ee7b7; }
+      .site {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 300px;
+        background: #1e293b;
+        padding: 10px 15px;
+        border-radius: 10px;
+        margin-top: 8px;
+      }
       a {
         color: #6ee7b7;
         text-decoration: none;
         font-weight: 600;
       }
-      .site-list {
-        margin-top: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-      .site-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 320px;
-        background: #1e293b;
-        padding: 10px 15px;
-        border-radius: 8px;
-      }
-      .delete-btn {
+      a:hover { text-decoration: underline; }
+      button {
         background: #ef4444;
         border: none;
         color: white;
@@ -76,83 +70,84 @@ app.get("/list", (req, res) => {
         padding: 4px 8px;
         cursor: pointer;
       }
-      .delete-btn:hover { opacity: 0.9; }
-      button.back {
-        margin-top: 30px;
-        padding: 10px 18px;
-        border: none;
-        border-radius: 10px;
+      button:hover { opacity: 0.8; }
+      .back {
+        margin-top: 25px;
         background: #6ee7b7;
         color: #0f172a;
-        font-weight: bold;
-        cursor: pointer;
+        padding: 8px 15px;
+        border-radius: 8px;
       }
     </style>
   </head>
   <body>
     <h1>🌐 Sites hospedados</h1>
-    <div class="site-list">`;
+  `;
 
   if (sites.length === 0) {
     html += "<p>Nenhum site foi hospedado ainda 😅</p>";
   } else {
     sites.forEach(site => {
       html += `
-        <div class="site-item">
+        <div class="site">
           <a href="/${site}" target="_blank">${site}</a>
-          <button class="delete-btn" onclick="fetch('/delete/${site}', {method: 'DELETE'}).then(()=>location.reload())">🗑️</button>
+          <form method="POST" action="/delete/${site}" onsubmit="return confirm('Tem certeza que deseja deletar ${site}?')">
+            <button>🗑️</button>
+          </form>
         </div>
       `;
     });
   }
 
   html += `
-    </div>
-    <button class="back" onclick="window.location.href='/'">⬅️ Voltar</button>
+    <a href="/" class="back">⬅️ Voltar</a>
   </body>
-  </html>`;
+  </html>
+  `;
 
   res.send(html);
 });
 
-// rota para deletar site
-app.delete("/delete/:name", (req, res) => {
+// 🔥 Criar novo site
+app.post("/create", (req, res) => {
+  const siteName = req.query.name;
+  const html = req.body || "<h1>Site vazio criado!</h1>";
+
+  if (!siteName) {
+    return res.status(400).send("Erro: forneça um nome ?name=nomedosite");
+  }
+
+  const sitePath = path.join(sitesDir, siteName);
+  if (!fs.existsSync(sitePath)) fs.mkdirSync(sitePath);
+
+  fs.writeFileSync(path.join(sitePath, "index.html"), html);
+  res.send(`✅ Site criado! <a href="/${siteName}" target="_blank">Abrir</a>`);
+});
+
+// 🔥 Upload de arquivos extras
+app.post("/upload/:name", upload.single("file"), (req, res) => {
   const siteName = req.params.name;
   const sitePath = path.join(sitesDir, siteName);
 
-  if (fs.existsSync(sitePath)) {
-    fs.rmSync(sitePath, { recursive: true, force: true });
-    return res.send("✅ Site deletado com sucesso!");
+  if (!fs.existsSync(sitePath)) {
+    return res.status(404).send("Site não encontrado!");
   }
 
-  res.status(404).send("❌ Site não encontrado!");
+  const file = req.file;
+  const destPath = path.join(sitePath, file.originalname);
+  fs.renameSync(file.path, destPath);
+
+  res.redirect(`/list`);
 });
 
-// rota para criar site (HTML + arquivos)
-app.post("/create", upload.array("files"), (req, res) => {
-  const siteName = req.body.name;
-  const html = req.body.html;
-  if (!siteName || !html) {
-    return res.status(400).send("❌ Faltando nome ou HTML!");
-  }
-
+// 🔥 Deletar site
+app.post("/delete/:name", (req, res) => {
+  const siteName = req.params.name;
   const sitePath = path.join(sitesDir, siteName);
-  if (!fs.existsSync(sitePath)) {
-    fs.mkdirSync(sitePath);
+  if (fs.existsSync(sitePath)) {
+    fs.rmSync(sitePath, { recursive: true });
   }
-
-  // salva o HTML principal
-  fs.writeFileSync(path.join(sitePath, "index.html"), html);
-
-  // salva arquivos enviados
-  if (req.files) {
-    req.files.forEach(file => {
-      const destPath = path.join(sitePath, file.originalname);
-      fs.renameSync(file.path, destPath);
-    });
-  }
-
-  res.send("✅ Site criado com sucesso!");
+  res.redirect("/list");
 });
 
 app.listen(PORT, () => {

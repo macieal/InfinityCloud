@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>InfinityCloud</title>
 <style>
 :root {
   --bg-dark: #0f172a;
   --text-dark: #e2e8f0;
   --accent: #6ee7b7;
+  --window-bg: #1e293b;
 }
 body {
   font-family: system-ui, sans-serif;
   margin: 0;
-  padding: 0;
   background: var(--bg-dark);
   color: var(--text-dark);
   display: flex;
@@ -21,23 +21,18 @@ body {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  transition: 0.3s;
 }
-h1 {
-  color: var(--accent);
-  font-size: 2.2rem;
-}
+h1 { color: var(--accent); }
 button {
   background: var(--accent);
   border: none;
-  padding: 10px 18px;
   border-radius: 10px;
+  padding: 10px 18px;
   cursor: pointer;
-  margin-top: 15px;
+  margin: 10px;
   font-weight: 600;
 }
 button:hover { opacity: 0.9; }
-
 #theme-toggle {
   position: absolute;
   top: 20px;
@@ -47,106 +42,128 @@ button:hover { opacity: 0.9; }
   color: var(--accent);
   padding: 6px 12px;
   border-radius: 8px;
+  font-weight: 600;
 }
-
-/* 🪟 Janela estilo Windows */
+.light {
+  background: #f5f5f5;
+  color: #1a1a1a;
+}
+.light h1 { color: #14b8a6; }
+.light #theme-toggle {
+  border-color: #14b8a6;
+  color: #14b8a6;
+}
 .window {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 500px;
-  background: #1e293b;
-  color: white;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  background: var(--window-bg);
+  border-radius: 12px;
+  width: 400px;
+  box-shadow: 0 0 20px #0005;
   display: none;
   flex-direction: column;
+  padding: 0;
 }
-.window-header {
-  background: #334155;
-  padding: 10px;
+.titlebar {
+  background: #111827;
+  color: var(--text-dark);
+  padding: 8px 12px;
+  border-radius: 12px 12px 0 0;
   display: flex;
   justify-content: flex-end;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
+  align-items: center;
 }
 .close-btn {
   background: #ef4444;
   border: none;
-  color: white;
-  width: 30px;
-  height: 30px;
-  border-radius: 5px;
-  cursor: pointer;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
   font-weight: bold;
+  color: white;
+  cursor: pointer;
 }
+.close-btn:hover { background: #dc2626; }
 .window-content {
-  padding: 20px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.window-content textarea {
-  width: 100%;
-  height: 200px;
-  border: none;
-  border-radius: 6px;
-  padding: 10px;
-  font-family: monospace;
-}
-.window-content input {
+input[type="text"], input[type="file"], textarea {
   width: 100%;
   padding: 8px;
   border-radius: 6px;
   border: none;
-  margin-bottom: 10px;
+  outline: none;
 }
-.window-content button {
-  background: #6ee7b7;
-  color: #0f172a;
-}
+textarea { height: 100px; resize: none; }
 </style>
 </head>
 <body>
+<button id="theme-toggle">☀️ Modo Claro</button>
 <h1>🌐 InfinityCloud</h1>
-<p>Hospede sites HTML + arquivos diretamente no Render!</p>
+<p>Hospede sites HTML diretamente no Render!</p>
 <button id="create-site">Criar novo site</button>
 <button id="view-sites">Ver sites hospedados</button>
 
-<!-- 🪟 Janela estilo Windows -->
-<div class="window" id="create-window">
-  <div class="window-header">
+<div class="window" id="site-window">
+  <div class="titlebar">
     <button class="close-btn" id="close-window">X</button>
   </div>
   <div class="window-content">
-    <form id="upload-form" enctype="multipart/form-data">
-      <input type="text" name="name" placeholder="Nome do site" required>
-      <textarea name="html" placeholder="Cole o HTML do site aqui..." required></textarea>
-      <p>📁 Envie arquivos adicionais (CSS, JS, imagens...)</p>
-      <input type="file" name="files" multiple>
-      <button type="submit">Publicar site</button>
+    <input id="site-name" type="text" placeholder="Nome do site">
+    <textarea id="site-html" placeholder="(Opcional) Cole o HTML aqui"></textarea>
+    <button id="create-btn">Criar site</button>
+    <form id="upload-form" enctype="multipart/form-data" style="display:none;">
+      <input type="file" name="file" id="file">
+      <button type="submit">📁 Enviar arquivo</button>
     </form>
   </div>
 </div>
 
 <script>
-const win = document.getElementById("create-window");
-document.getElementById("create-site").onclick = () => win.style.display = "flex";
-document.getElementById("close-window").onclick = () => win.style.display = "none";
+const toggle = document.getElementById("theme-toggle");
+toggle.addEventListener("click", () => {
+  document.body.classList.toggle("light");
+  toggle.textContent = document.body.classList.contains("light")
+    ? "🌙 Modo Escuro" : "☀️ Modo Claro";
+});
 
-document.getElementById("upload-form").onsubmit = async (e) => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
+const createBtn = document.getElementById("create-site");
+const win = document.getElementById("site-window");
+const closeWin = document.getElementById("close-window");
+const nameInput = document.getElementById("site-name");
+const htmlInput = document.getElementById("site-html");
+const uploadForm = document.getElementById("upload-form");
+const fileInput = document.getElementById("file");
 
-  const res = await fetch("/create", {
+createBtn.onclick = () => win.style.display = "flex";
+closeWin.onclick = () => win.style.display = "none";
+
+document.getElementById("create-btn").onclick = async () => {
+  const name = nameInput.value.trim();
+  const html = htmlInput.value || "";
+  if (!name) return alert("Dê um nome ao site!");
+
+  await fetch(`/create?name=${encodeURIComponent(name)}`, {
     method: "POST",
-    body: formData
+    headers: { "Content-Type": "text/html" },
+    body: html
   });
 
-  if (res.ok) {
-    alert("✅ Site criado com sucesso!");
-    win.style.display = "none";
-  } else {
-    alert("❌ Erro ao criar o site!");
-  }
+  alert("✅ Site criado!");
+  uploadForm.action = `/upload/${encodeURIComponent(name)}`;
+  uploadForm.style.display = "block";
+};
+
+uploadForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const data = new FormData(uploadForm);
+  await fetch(uploadForm.action, { method: "POST", body: data });
+  alert("📁 Arquivo enviado!");
 };
 
 document.getElementById("view-sites").onclick = () => {
