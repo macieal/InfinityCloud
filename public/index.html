@@ -1,195 +1,77 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>InfinityCloud</title>
-  <link rel="shortcut icon" href="./nuvem.png" type="image/x-icon">
-  <style>
-    :root {
-      --bg:#0f1724;
-      --card:#0b1220;
-      --muted:#9aa7b2;
-      --accent:#6ee7b7;
-      --text:white;
-    }
-
-    [data-theme="light"] {
-      --bg:#f3f4f6;
-      --card:#fff;
-      --text:#111;
-    }
-
-    *{box-sizing:border-box;font-family:Inter,system-ui,Arial,sans-serif;}
-    body{margin:0;background:var(--bg);color:var(--text);transition:background .3s,color .3s;}
-    header{background:var(--card);padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--muted);}
-    h1{margin:0;font-size:1.5rem;}
-    .controls button{background:var(--accent);border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:bold;color:black;}
-    main{padding:1rem 2rem;max-width:800px;margin:auto;}
-    nav{margin-bottom:1rem;display:flex;gap:10px;}
-    nav button{background:var(--card);border:1px solid var(--muted);padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text);}
-    nav button.active{background:var(--accent);color:black;font-weight:bold;}
-    .site{background:var(--card);padding:1rem;border-radius:8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
-    .site a{color:var(--accent);text-decoration:none;}
-    .site button{border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-weight:bold;}
-    .edit{background:#2980b9;color:white;}
-    .delete{background:#e74c3c;color:white;}
-    dialog{background:var(--card);color:var(--text);border:none;border-radius:10px;padding:1rem;width:350px;}
-    dialog::backdrop{background:rgba(0,0,0,0.5);}
-    input,textarea{width:100%;margin-top:10px;padding:10px;border-radius:8px;border:1px solid var(--muted);background:#08111e;color:white;font-size:14px;}
-    [data-theme="light"] input,[data-theme="light"] textarea{background:#fff;color:#000;}
-    textarea{min-height:100px;}
-    label{display:block;margin-top:10px;}
-    .modal-buttons{display:flex;justify-content:flex-end;margin-top:10px;gap:10px;}
-    .modal-buttons button{background:var(--accent);border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:bold;color:black;}
-    .modal-buttons .cancel{background:#444;color:white;}
-  </style>
+<meta charset="UTF-8">
+<title>InfinityCloud ☁️</title>
+<style>
+body {
+  background:#0b1220;color:#fff;font-family:Arial, sans-serif;margin:0;padding:0;text-align:center;
+}
+.container {
+  max-width:600px;margin:60px auto;background:#111a2d;padding:20px;border-radius:16px;box-shadow:0 0 20px #0005;
+}
+input, textarea, button {
+  width:90%;margin:10px 0;padding:10px;border:none;border-radius:8px;
+}
+textarea {height:150px;}
+button {
+  cursor:pointer;background:#6ee7b7;color:#000;font-weight:bold;
+}
+button:hover {opacity:0.8;}
+#sitesList a {
+  display:block;margin:5px 0;padding:8px;border-radius:8px;background:#1e293b;color:#fff;text-decoration:none;
+}
+</style>
 </head>
-<body data-theme="dark">
-  <header>
-    <h1>☁ InfinityCloud</h1>
-    <div class="controls">
-      <button id="themeBtn">🌙 Modo</button>
-      <button id="newSiteBtn">+ Novo site</button>
-    </div>
-  </header>
+<body>
+  <div class="container">
+    <h1>🌐 InfinityCloud</h1>
+    <p>Hospede seus sites de forma simples e rápida</p>
 
-  <main>
-    <nav>
-      <button id="mySitesTab" class="active">Meus sites</button>
-      <button id="communityTab">Comunidade</button>
-    </nav>
+    <input type="text" id="siteName" placeholder="Nome do site (sem espaços)">
+    <textarea id="siteHtml" placeholder="Cole seu código HTML aqui"></textarea>
+    <button onclick="createSite()">Publicar</button>
 
-    <section id="siteList"></section>
-  </main>
+    <h2>🌍 Comunidade</h2>
+    <div id="sitesList"></div>
+  </div>
 
-  <dialog id="modal">
-    <h2 id="modalTitle">Criar novo site</h2>
-    <input type="text" id="siteName" placeholder="Nome do site">
-    <textarea id="siteHTML" placeholder="Cole o HTML aqui"></textarea>
-    <label><input type="checkbox" id="publishCheck"> Publicar na comunidade</label>
-    <div class="modal-buttons">
-      <button class="cancel" id="cancelBtn">Cancelar</button>
-      <button id="createBtn">Salvar</button>
-    </div>
-  </dialog>
+<script>
+const userId = localStorage.getItem("userId") || crypto.randomUUID();
+localStorage.setItem("userId", userId);
 
-  <script>
-    let userId = localStorage.getItem("infinity_user");
-    if (!userId) {
-      userId = crypto.randomUUID();
-      localStorage.setItem("infinity_user", userId);
-    }
+async function loadSites() {
+  const res = await fetch("/api/sites");
+  const sites = await res.json();
+  const list = document.getElementById("sitesList");
+  list.innerHTML = "";
+  sites.forEach(s => {
+    const a = document.createElement("a");
+    a.href = "/" + s;
+    a.textContent = s;
+    list.appendChild(a);
+  });
+}
+loadSites();
 
-    const siteList = document.getElementById("siteList");
-    const modal = document.getElementById("modal");
-    const modalTitle = document.getElementById("modalTitle");
-    const newSiteBtn = document.getElementById("newSiteBtn");
-    const cancelBtn = document.getElementById("cancelBtn");
-    const createBtn = document.getElementById("createBtn");
-    const themeBtn = document.getElementById("themeBtn");
-    const mySitesTab = document.getElementById("mySitesTab");
-    const communityTab = document.getElementById("communityTab");
-
-    let editing = null;
-    let currentTab = "my";
-
-    async function loadSites() {
-      const url = currentTab === "community"
-        ? "/api/community"
-        : `/api/list/${userId}`;
-      const res = await fetch(url);
-      const sites = await res.json();
-      siteList.innerHTML = "";
-      if (!sites.length) {
-        siteList.innerHTML = "<p>Nenhum site encontrado.</p>";
-        return;
-      }
-
-      sites.forEach(site => {
-        const div = document.createElement("div");
-        div.className = "site";
-        div.innerHTML = `
-          <a href="/${site.name}" target="_blank">${site.name}</a>
-          <div>
-            ${site.owner === userId
-              ? `<button class="edit" onclick="editSite('${site.name}')">Editar</button>
-                 <button class="delete" onclick="deleteSite('${site.name}')">Excluir</button>`
-              : ""}
-          </div>`;
-        siteList.appendChild(div);
-      });
-    }
-
-    async function createSite() {
-      const name = document.getElementById("siteName").value.trim();
-      const html = document.getElementById("siteHTML").value.trim();
-      const publish = document.getElementById("publishCheck").checked;
-      if (!name || !html) return alert("Preencha tudo!");
-
-      const res = await fetch("/api/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, html, userId, editing, publish })
-      });
-
-      if (res.ok) {
-        modal.close();
-        editing = null;
-        loadSites();
-      } else alert("Erro ao salvar!");
-    }
-
-    async function deleteSite(name) {
-      if (!confirm("Tem certeza?")) return;
-      await fetch(`/api/delete/${name}?user=${userId}`, { method: "DELETE" });
-      loadSites();
-    }
-
-    async function editSite(name) {
-      const res = await fetch(`/api/get/${name}?user=${userId}`);
-      if (!res.ok) return alert("Você não pode editar este site!");
-      const data = await res.json();
-      document.getElementById("siteName").value = name;
-      document.getElementById("siteHTML").value = data.html;
-      document.getElementById("publishCheck").checked = data.public;
-      modalTitle.textContent = "Editar site";
-      modal.showModal();
-      editing = name;
-    }
-
-    newSiteBtn.onclick = () => {
-      editing = null;
-      document.getElementById("siteName").value = "";
-      document.getElementById("siteHTML").value = "";
-      document.getElementById("publishCheck").checked = false;
-      modalTitle.textContent = "Criar novo site";
-      modal.showModal();
-    };
-    cancelBtn.onclick = () => modal.close();
-    createBtn.onclick = createSite;
-
-    themeBtn.onclick = () => {
-      const body = document.body;
-      const isDark = body.getAttribute("data-theme") === "dark";
-      body.setAttribute("data-theme", isDark ? "light" : "dark");
-      themeBtn.textContent = isDark ? "☀️ Modo" : "🌙 Modo";
-    };
-
-    mySitesTab.onclick = () => {
-      currentTab = "my";
-      mySitesTab.classList.add("active");
-      communityTab.classList.remove("active");
-      loadSites();
-    };
-    communityTab.onclick = () => {
-      currentTab = "community";
-      communityTab.classList.add("active");
-      mySitesTab.classList.remove("active");
-      loadSites();
-    };
-
+async function createSite() {
+  const name = document.getElementById("siteName").value.trim();
+  const html = document.getElementById("siteHtml").value;
+  if (!name) return alert("Dê um nome para o site!");
+  try {
+    const res = await fetch("/api/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, html, userId })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data);
+    alert(data.message);
     loadSites();
-  </script>
+  } catch (err) {
+    alert("Erro: " + err.message);
+  }
+}
+</script>
 </body>
 </html>
