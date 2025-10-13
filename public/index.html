@@ -4,72 +4,120 @@
 <meta charset="UTF-8">
 <title>InfinityCloud ☁️</title>
 <style>
+:root {
+  --bg: #0f1724;
+  --card: #1e293b;
+  --text: #fff;
+  --accent: #6ee7b7;
+}
 body {
-  background:#0b1220;color:#fff;font-family:Arial, sans-serif;margin:0;padding:0;text-align:center;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 0;
 }
 .container {
-  max-width:600px;margin:60px auto;background:#111a2d;padding:20px;border-radius:16px;box-shadow:0 0 20px #0005;
+  max-width: 700px;
+  margin: 50px auto;
+  background: var(--card);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 0 20px #0005;
 }
 input, textarea, button {
-  width:90%;margin:10px 0;padding:10px;border:none;border-radius:8px;
+  width: 90%;
+  margin: 8px 0;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
 }
-textarea {height:150px;}
+textarea {
+  height: 150px;
+  resize: none;
+}
 button {
-  cursor:pointer;background:#6ee7b7;color:#000;font-weight:bold;
+  background: var(--accent);
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
 }
-button:hover {opacity:0.8;}
-#sitesList a {
-  display:block;margin:5px 0;padding:8px;border-radius:8px;background:#1e293b;color:#fff;text-decoration:none;
+button:hover { opacity: 0.8; }
+#communityList a {
+  display: block;
+  text-decoration: none;
+  color: var(--text);
+  background: #0b1220;
+  margin: 6px 0;
+  padding: 10px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+#communityList a:hover {
+  background: var(--accent);
+  color: #000;
 }
 </style>
 </head>
 <body>
   <div class="container">
     <h1>🌐 InfinityCloud</h1>
-    <p>Hospede seus sites de forma simples e rápida</p>
+    <p>Hospede seus sites e compartilhe com a comunidade!</p>
 
     <input type="text" id="siteName" placeholder="Nome do site (sem espaços)">
     <textarea id="siteHtml" placeholder="Cole seu código HTML aqui"></textarea>
-    <button onclick="createSite()">Publicar</button>
+    <label>
+      <input type="checkbox" id="publishCommunity">
+      Publicar na comunidade
+    </label><br>
+    <button onclick="createSite()">Publicar site</button>
 
     <h2>🌍 Comunidade</h2>
-    <div id="sitesList"></div>
+    <div id="communityList">Carregando sites...</div>
   </div>
 
 <script>
 const userId = localStorage.getItem("userId") || crypto.randomUUID();
 localStorage.setItem("userId", userId);
 
-async function loadSites() {
-  const res = await fetch("/api/sites");
+async function loadCommunity() {
+  const res = await fetch("/api/community");
   const sites = await res.json();
-  const list = document.getElementById("sitesList");
+  const list = document.getElementById("communityList");
   list.innerHTML = "";
-  sites.forEach(s => {
+  if (!sites.length) {
+    list.innerHTML = "<p>Nenhum site publicado ainda!</p>";
+    return;
+  }
+  sites.forEach(name => {
     const a = document.createElement("a");
-    a.href = "/" + s;
-    a.textContent = s;
+    a.href = "/" + name;
+    a.textContent = name;
     list.appendChild(a);
   });
 }
-loadSites();
+loadCommunity();
 
 async function createSite() {
   const name = document.getElementById("siteName").value.trim();
   const html = document.getElementById("siteHtml").value;
-  if (!name) return alert("Dê um nome para o site!");
+  const publishCommunity = document.getElementById("publishCommunity").checked;
+  if (!name) return alert("❌ Dê um nome ao seu site!");
+  if (!html) return alert("❌ Cole o HTML do seu site!");
+
   try {
     const res = await fetch("/api/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, html, userId })
+      body: JSON.stringify({ name, html, userId, publishCommunity })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data);
+    if (!res.ok) throw new Error(data.error || "Erro desconhecido");
     alert(data.message);
-    loadSites();
+    loadCommunity();
   } catch (err) {
-    alert("Erro: " + err.message);
+    alert(err.message);
   }
 }
 </script>
