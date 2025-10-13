@@ -6,83 +6,100 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
-app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json({ limit: "10mb" }));
 
 const sitesDir = path.join(__dirname, "sites");
 if (!fs.existsSync(sitesDir)) fs.mkdirSync(sitesDir);
 
-const dbFile = path.join(sitesDir, "db.json");
-if (!fs.existsSync(dbFile)) fs.writeFileSync(dbFile, "{}");
+// Arquivo que guarda os donos dos sites
+const ownersFile = path.join(sitesDir, "owners.json");
 
-const getDB = () => JSON.parse(fs.readFileSync(dbFile, "utf8"));
-const saveDB = (data) => fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
+// Garante que o arquivo exista
+if (!fs.existsSync(ownersFile)) {
+  fs.writeFileSync(ownersFile, JSON.stringify({}));
+}
 
+// Função para carregar e salvar donos
+function getOwners() {
+  return JSON.parse(fs.readFileSync(ownersFile, "utf-8"));
+}
+function saveOwners(owners) {
+  fs.writeFileSync(ownersFile, JSON.stringify(owners, null, 2));
+}
+
+// Criar site
 app.post("/api/create", (req, res) => {
-  const { name, html, userId, editing, publish } = req.body;
-  if (!name || !html || !userId) return res.status(400).send("Dados inválidos.");
-  const db = getDB();
+  const { name, html, userId } = req.body;
+  if (!name || !html || !userId) return res.status(400).send("Campos inválidos");
 
-  const folder = path.join(sitesDir, userId);
-  if (!fs.existsSync(folder)) fs.mkdirSync(folder);
-  const siteFolder = path.join(folder, name);
-  if (!fs.existsSync(siteFolder)) fs.mkdirSync(siteFolder);
-  fs.writeFileSync(path.join(siteFolder, "index.html"), html);
+  const owners = getOwners();
 
-  db[name] = { owner: userId, updated: Date.now(), public: publish };
-  saveDB(db);
-  res.json({ ok: true });
+  // Se já existe e o dono é outro
+  if (owners[name] && owners[name] !== userId) {
+    return res.status(403).send("❌ Esse nome já pertence a outro usuário!");
+  }
+
+  // Se for novo, salva o dono
+  owners[name] = userId;
+  saveOwners(owners);
+
+  // Cria a pasta e salva o HTML
+  const sitePath = path.join(sitesDir, name);
+  if (!fs.existsSync(sitePath)) fs.mkdirSync(sitePath);
+  fs.writeFileSync(path.join(sitePath, "index.html"), html);
+
+  res.send({ message: "✅ Site criado com sucesso!", url: `/${name}` });
 });
 
-app.get("/api/list/:userId", (req, res) => {
-  const { userId } = req.params;
-  const db = getDB();
-  const sites = Object.entries(db)
-    .filter(([_, v]) => v.owner === userId)
-    .map(([name, v]) => ({ name, owner: v.owner }));
-  res.json(sites);
+// Editar site (só o dono pode)
+app.post("/api/edit", (req, res) => {
+  const { name, html, userId } = req.body;
+  if (!name || !html || !userId) return res.status(400).send("Campos inválidos");
+
+  const owners = getOwners();
+
+  if (!owners[name]) return res.status(404).send("❌ Site não existe!");
+  if (owners[name] !== userId) return res.status(403).send("❌ Você não é o dono deste site!");
+
+  const sitePath = path.join(sitesDir, name, "index.html");
+  fs.writeFileSync(sitePath, html);
+
+  res.send({ message: "✏️ Site atualizado com sucesso!" });
 });
 
-app.get("/api/community", (req, res) => {
-  const db = getDB();
-  const sites = Object.entries(db)
-    .filter(([_, v]) => v.public)
-    .map(([name, v]) => ({ name, owner: v.owner }));
-  res.json(sites);
+// Deletar site (só o dono pode)
+app.post("/api/delete", (req, res) => {
+  const { name, userId } = req.body;
+  if (!name || !userId) return res.status(400).send("Campos inválidos");
+
+  const owners = getOwners();
+
+  if (!owners[name]) return res.status(404).send("❌ Site não existe!");
+  if (owners[name] !== userId) return res.status(403).send("❌ Você não é o dono deste site!");
+
+  const sitePath = path.join(sitesDir, name);
+  fs.rmSync(sitePath, { recursive: true, force: true });
+  delete owners[name];
+  saveOwners(owners);
+
+  res.send({ message: "🗑️ Site deletado com sucesso!" });
 });
 
-app.get("/api/get/:name", (req, res) => {
-  const { name } = req.params;
-  const { user } = req.query;
-  const db = getDB();
-  if (!db[name] || db[name].owner !== user)
-    return res.status(403).send("Sem permissão.");
-  const file = path.join(sitesDir, user, name, "index.html");
-  if (!fs.existsSync(file)) return res.status(404).send("Não encontrado.");
-  const html = fs.readFileSync(file, "utf8");
-  res.json({ html, public: db[name].public });
+// Listar sites públicos
+app.get("/api/sites", (req, res) => {
+  const owners = getOwners();
+  res.send(Object.keys(owners));
 });
 
-app.delete("/api/delete/:name", (req, res) => {
-  const { name } = req.params;
-  const { user } = req.query;
-  const db = getDB();
-  if (!db[name] || db[name].owner !== user)
-    return res.status(403).send("Sem permissão.");
-  const folder = path.join(sitesDir, user, name);
-  if (fs.existsSync(folder)) fs.rmSync(folder, { recursive: true, force: true });
-  delete db[name];
-  saveDB(db);
-  res.json({ message: "Excluído!" });
+// Servir os sites criados
+app.use("/:siteName", (req, res) => {
+  const sitePath = path.join(sitesDir, req.params.siteName, "index.html");
+  if (fs.existsSync(sitePath)) {
+    res.sendFile(sitePath);
+  } else {
+    res.status(404).send(`<h1>404 - Site não encontrado</h1>`);
+  }
 });
 
-app.get("/:site", (req, res) => {
-  const db = getDB();
-  const name = req.params.site;
-  if (!db[name]) return res.status(404).send("Site não encontrado.");
-  const siteFile = path.join(sitesDir, db[name].owner, name, "index.html");
-  if (fs.existsSync(siteFile)) res.sendFile(siteFile);
-  else res.status(404).send("Não encontrado.");
-});
-
-app.listen(PORT, () => console.log(`🌐 InfinityCloud rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 InfinityCloud rodando na porta ${PORT}`));
