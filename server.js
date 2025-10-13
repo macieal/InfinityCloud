@@ -12,45 +12,77 @@ app.use(express.static(path.join(__dirname, "public")));
 const sitesDir = path.join(__dirname, "sites");
 if (!fs.existsSync(sitesDir)) fs.mkdirSync(sitesDir);
 
-// Página inicial (painel)
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+const dbFile = path.join(sitesDir, "db.json");
+if (!fs.existsSync(dbFile)) fs.writeFileSync(dbFile, "{}");
 
-// Criar novo site
+const getDB = () => JSON.parse(fs.readFileSync(dbFile, "utf8"));
+const saveDB = (data) => fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
+
 app.post("/api/create", (req, res) => {
-  const { name, html } = req.body;
-  if (!name || !html) return res.status(400).send("Nome e HTML obrigatórios.");
+  const { name, html, userId, editing, publish } = req.body;
+  if (!name || !html || !userId) return res.status(400).send("Dados inválidos.");
+  const db = getDB();
 
-  const folder = path.join(sitesDir, name);
+  const folder = path.join(sitesDir, userId);
   if (!fs.existsSync(folder)) fs.mkdirSync(folder);
+  const siteFolder = path.join(folder, name);
+  if (!fs.existsSync(siteFolder)) fs.mkdirSync(siteFolder);
+  fs.writeFileSync(path.join(siteFolder, "index.html"), html);
 
-  fs.writeFileSync(path.join(folder, "index.html"), html);
-  res.json({ message: "Site criado!", url: `/${name}` });
+  db[name] = { owner: userId, updated: Date.now(), public: publish };
+  saveDB(db);
+  res.json({ ok: true });
 });
 
-// Listar sites
-app.get("/api/list", (req, res) => {
-  const sites = fs.readdirSync(sitesDir);
+app.get("/api/list/:userId", (req, res) => {
+  const { userId } = req.params;
+  const db = getDB();
+  const sites = Object.entries(db)
+    .filter(([_, v]) => v.owner === userId)
+    .map(([name, v]) => ({ name, owner: v.owner }));
   res.json(sites);
 });
 
-// Deletar site
-app.delete("/api/delete/:name", (req, res) => {
-  const folder = path.join(sitesDir, req.params.name);
-  if (fs.existsSync(folder)) {
-    fs.rmSync(folder, { recursive: true, force: true });
-    res.json({ message: "Site excluído!" });
-  } else {
-    res.status(404).send("Site não encontrado.");
-  }
+app.get("/api/community", (req, res) => {
+  const db = getDB();
+  const sites = Object.entries(db)
+    .filter(([_, v]) => v.public)
+    .map(([name, v]) => ({ name, owner: v.owner }));
+  res.json(sites);
 });
 
-// Servir sites criados
+app.get("/api/get/:name", (req, res) => {
+  const { name } = req.params;
+  const { user } = req.query;
+  const db = getDB();
+  if (!db[name] || db[name].owner !== user)
+    return res.status(403).send("Sem permissão.");
+  const file = path.join(sitesDir, user, name, "index.html");
+  if (!fs.existsSync(file)) return res.status(404).send("Não encontrado.");
+  const html = fs.readFileSync(file, "utf8");
+  res.json({ html, public: db[name].public });
+});
+
+app.delete("/api/delete/:name", (req, res) => {
+  const { name } = req.params;
+  const { user } = req.query;
+  const db = getDB();
+  if (!db[name] || db[name].owner !== user)
+    return res.status(403).send("Sem permissão.");
+  const folder = path.join(sitesDir, user, name);
+  if (fs.existsSync(folder)) fs.rmSync(folder, { recursive: true, force: true });
+  delete db[name];
+  saveDB(db);
+  res.json({ message: "Excluído!" });
+});
+
 app.get("/:site", (req, res) => {
-  const siteFile = path.join(sitesDir, req.params.site, "index.html");
+  const db = getDB();
+  const name = req.params.site;
+  if (!db[name]) return res.status(404).send("Site não encontrado.");
+  const siteFile = path.join(sitesDir, db[name].owner, name, "index.html");
   if (fs.existsSync(siteFile)) res.sendFile(siteFile);
-  else res.status(404).send("Site não encontrado.");
+  else res.status(404).send("Não encontrado.");
 });
 
 app.listen(PORT, () => console.log(`🌐 InfinityCloud rodando na porta ${PORT}`));
