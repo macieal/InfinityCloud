@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InfinityPost</title>
+  <link rel="shortcut icon" href="./dimensoes.png" type="image/x-icon">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>InfinityPost</h1>
+
+    <button id="btn-new">Criar Post</button>
+
+    <div id="post-list"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Novo Post</h2>
+      <input id="nick" placeholder="Seu nick" />
+      <input id="topic" placeholder="Assunto" />
+      <textarea id="text" placeholder="Texto..."></textarea>
+      <button id="save">Salvar</button>
+      <button id="close">Fechar</button>
+    </div>
+  </div>
+  
+  <script src="script.js" defer></script>
+</body>
+</html>
